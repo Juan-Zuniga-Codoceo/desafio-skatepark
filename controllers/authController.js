@@ -4,8 +4,18 @@ import jwt from 'jsonwebtoken';
 
 export const register = async (req, res) => {
     const { email, nombre, password, anos_experiencia, especialidad } = req.body;
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send('No files were uploaded.');
+    }
     const { foto } = req.files;
+
+    // Validaciones de longitud
+    if (nombre.length > 50 || email.length > 50 || especialidad.length > 50) {
+        return res.status(400).send('One or more fields exceed the maximum allowed length.');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(`Hashed password during registration: ${hashedPassword}`);
 
     foto.mv(`./public/images/${foto.name}`);
 
@@ -23,6 +33,8 @@ export const login = async (req, res) => {
 
     if (result.rows.length > 0) {
         const skater = result.rows[0];
+        console.log(`Stored hashed password during login: ${skater.password}`);
+
         const validPassword = await bcrypt.compare(password, skater.password);
 
         if (validPassword) {
@@ -32,9 +44,11 @@ export const login = async (req, res) => {
             res.cookie('token', token);
             res.redirect('/skaters/profile');
         } else {
+            console.log('Invalid password');
             res.send('Invalid password');
         }
     } else {
+        console.log('User not found');
         res.send('User not found');
     }
 };

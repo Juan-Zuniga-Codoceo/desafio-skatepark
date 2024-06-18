@@ -40,6 +40,20 @@ export const updateProfile = async (req, res) => {
     }
 };
 
+export const deleteProfile = async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.redirect('/auth/login');
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        await pool.query('DELETE FROM skaters WHERE id = $1', [decoded.id]);
+        res.clearCookie('token');
+        res.redirect('/');
+    } catch (error) {
+        res.redirect('/auth/login');
+    }
+};
+
 export const getAllSkaters = async (req, res) => {
     const result = await pool.query('SELECT * FROM skaters');
     const skaters = result.rows;
